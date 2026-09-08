@@ -5,22 +5,20 @@ import seafarerTwo from './assets/images/seafarer/2.png';
 import seafarerThree from './assets/images/seafarer/3.png';
 import seafarerFour from './assets/images/seafarer/4.png';
 import seafarerFive from './assets/images/seafarer/5.png';
+import branchManifest from './branch-manifest.json';
 
 export const asset = (path) => `${base}/${path}`;
 
-const branchAssetModules = import.meta.glob('./assets/images/branches/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}', {
-  eager: true,
-  import: 'default',
-  query: '?url',
-});
+const branchImageUrl = (branch, file) => {
+  if (!branch || !file) return undefined;
+  return `/assets/images/branches/${branch}/${encodeURIComponent(file).replace(/%2F/g, '/')}`;
+};
 
-const branchImageEntries = Object.entries(branchAssetModules)
-  .map(([path, src]) => {
-    const match = path.match(/branches\/([^/]+)\/(.+)$/);
-    return match ? { branch: match[1], file: match[2], src } : null;
-  })
-  .filter(Boolean)
-  .sort((left, right) => left.file.localeCompare(right.file, undefined, { numeric: true, sensitivity: 'base' }));
+const branchImageEntries = branchManifest.map(({ branch, file }) => ({
+  branch,
+  file,
+  src: branchImageUrl(branch, file),
+}));
 
 export const branchImages = branchImageEntries.reduce((groups, image) => {
   groups[image.branch] = groups[image.branch] || [];
@@ -30,7 +28,10 @@ export const branchImages = branchImageEntries.reduce((groups, image) => {
 
 export const allBranchImages = branchImageEntries;
 
-export const branchImage = (branch, file) => branchImages[branch]?.find((image) => image.file === file)?.src;
+export const branchImage = (branch, file) => (
+  branchImages[branch]?.find((image) => image.file === file)?.src
+  || branchImageUrl(branch, file)
+);
 
 export const branchImageAt = (branch, index = 0) => {
   const images = branchImages[branch] || [];
@@ -52,20 +53,19 @@ export const branchCoverImage = (branch, index = 0) => (
 );
 
 export const featuredBranchImages = [
-  { src: branchImage('adriatico', 'att.UHZIGmnUHJtaJiSFbgGxyKUSpnbnR0grCa22eX5kils.jpg'), alt: "Atlantic Seaman's Dormitory accommodation at the Adriatico branch" },
-  { src: branchImage('adriatico', '31dfc26b3c344c898e32448ea9a89e02.jpeg'), alt: "Atlantic Seaman's Dormitory reception at the Adriatico branch" },
-  { src: branchImage('adriatico', 'IMG_1856.JPG'), alt: "Atlantic Seaman's Dormitory seafarer dormitory with bunk beds" },
-  { src: branchImage('adriatico', 'IMG_1854.JPG'), alt: "Atlantic Seaman's Dormitory couple room at the Adriatico branch" },
-  { src: branchImage('adriatico', 'seaman.jpg'), alt: "Seafarer at Atlantic Seaman's Dormitory" },
-  // { src: 'https://images.unsplash.com/photo-1773829149054-b37887a28053?auto=format&fit=crop&w=1800&q=85', alt: 'Life preserver on a ship railing at sunset' },
+  { src: branchImage('mabini', 'att.UHZIGmnUHJtaJiSFbgGxyKUSpnbnR0grCa22eX5kils.jpg'), alt: "Atlantic Seaman's Dormitory dormitory room with bunk beds" },
+  { src: branchImage('mabini', 'att.8j41uJVGts6k5WWw1tL2zz1nSy92pubI7ib8Sbr9caY.jpg'), alt: "Atlantic Seaman's Dormitory dormitory accommodation" },
+  { src: branchImage('mabini', 'att.Bn1s08Qz6MHt0m1C76-RiuEXEDMUYduMpelpATihrbw.jpg'), alt: "Atlantic Seaman's Dormitory sleeping area" },
+  { src: branchImage('mabini', 'att.DAC1lnKLHrePnHR5XXFvKBypmkoJEx-RfCTBVUYtP5A.jpg'), alt: "Atlantic Seaman's Dormitory room interior" },
+  { src: branchImage('mabini', 'att.KyBMMGdvksxsmuY-jgmqPqVnTYBL-3YH_HEULiLyvZk.jpg'), alt: "Atlantic Seaman's Dormitory common area" },
 ];
 
 export const navItems = [
   { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Rooms', href: '/rooms' },
-  { label: 'Branches', href: '/branches', dropdown: true },
-  { label: 'Other Offers', href: '#offers', dropdown: true, noNavigation: true },
+  { label: 'Rooms & Rates', href: '/rooms', dropdown: true },
+  { label: 'Amenities', href: '/about', dropdown: true },
+  { label: 'Gallery', href: '/gallery' },
+  { label: 'FAQ', href: '/faq', dropdown: true },
   { label: 'Contacts', href: '/contacts' },
 ];
 

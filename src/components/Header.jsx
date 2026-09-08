@@ -4,8 +4,19 @@ import {
   ExpandMore,
   Menu as MenuIcon,
 } from '@mui/icons-material';
-import { Box, Button, Drawer, IconButton, Stack, Typography } from '@mui/material';
-import { branches, navItems } from '../data';
+import {
+  Box,
+  Button,
+  Drawer,
+  IconButton,
+  Menu,
+  MenuItem,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { logout as logoutRequest } from '../config/api';
+import { useAuthStore } from '../store/authStore';
+import { navItems } from '../data';
 import logo from '../assets/images/logo/logo.png';
 
 function Brand({ onClick }) {
@@ -19,10 +30,10 @@ function Brand({ onClick }) {
 
 function getActiveNavigationLabel(path) {
   if (path === '/') return 'Home';
-  if (path === '/about') return 'About';
-  if (path === '/rooms' || path === '/room') return 'Rooms';
-  if (path === '/branches' || path.startsWith('/branch/')) return 'Branches';
-  if (path === '/architecture') return 'Other Offers';
+  if (path === '/about') return 'Amenities';
+  if (path === '/rooms' || path === '/room') return 'Rooms & Rates';
+  if (path === '/gallery') return 'Gallery';
+  if (path === '/faq' || path === '/faq2') return 'FAQ';
   if (path === '/contacts' || path === '/contacts2') return 'Contacts';
   return null;
 }
@@ -32,10 +43,9 @@ function Navigation({ mobile = false, onNavigate }) {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
   const activeLabel = getActiveNavigationLabel(path);
   const submenuItems = {
-    News: [{ label: 'News', href: '/news' }, { label: 'Single post', href: '/post' }],
-    Branches: branches.map(({ name, id, upcoming }) => ({ label: name, href: `/branch/${id}`, upcoming })),
-    'Other Offers': [{ label: 'Architecture', href: 'https://zm-design-sigma.vercel.app/', external: true }],
-    Pages: [{ label: 'Gallery', href: '/gallery' }, { label: 'FAQ V1', href: '/faq' }, { label: 'FAQ V2', href: '/faq2' }, { label: 'Error Page', href: '/error' }],
+    'Rooms & Rates': [{ label: 'All Rooms', href: '/rooms' }, { label: 'Bedspace', href: '/rooms' }, { label: 'Solo Room', href: '/rooms' }, { label: 'Couple Room', href: '/rooms' }],
+    Amenities: [{ label: 'About Us', href: '/about' }, { label: 'Branches', href: '/branches' }],
+    FAQ: [{ label: 'FAQ V1', href: '/faq' }, { label: 'FAQ V2', href: '/faq2' }],
   };
 
   return (
@@ -75,11 +85,137 @@ function Navigation({ mobile = false, onNavigate }) {
   );
 }
 
+function UserAccountMenu({ user, isAdmin, isCustomer, onLogout }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const displayName = user?.name || user?.email || 'Account';
+
+  const handleOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const navigate = (href) => {
+    handleClose();
+    window.location.href = href;
+  };
+
+  const handleLogoutClick = async () => {
+    handleClose();
+    await onLogout();
+  };
+
+  return (
+    <Box className="header-user-menu">
+      <Button
+        type="button"
+        className="header-user-trigger"
+        onClick={handleOpen}
+        aria-controls={open ? 'header-user-menu' : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? 'true' : undefined}
+        endIcon={<ExpandMore className={`header-user-chevron ${open ? 'is-open' : ''}`} />}
+      >
+        <Typography component="span" className="header-user-name">
+          {displayName}
+        </Typography>
+      </Button>
+      <Menu
+        id="header-user-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        className="header-user-menu-panel"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        MenuListProps={{ className: 'header-user-menu-list' }}
+      >
+        {isAdmin && (
+          <MenuItem onClick={() => navigate('/dashboard')}>Dashboard</MenuItem>
+        )}
+        {isCustomer && (
+          <MenuItem onClick={() => navigate('/account')}>My Account</MenuItem>
+        )}
+        {isCustomer && (
+          <MenuItem onClick={() => navigate('/reserve')}>Reserve</MenuItem>
+        )}
+        <MenuItem onClick={handleLogoutClick} className="header-user-menu-logout">
+          Logout
+        </MenuItem>
+      </Menu>
+    </Box>
+  );
+}
+
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const isAuthenticated = Boolean(token);
+  const isAdmin = useAuthStore((state) => state.isAdmin());
+  const isCustomer = useAuthStore((state) => state.isCustomer());
 
   const close = () => setOpen(false);
+
+  const handleLogout = async () => {
+    try {
+      await logoutRequest();
+    } catch {
+      // Clear local session even if the API call fails.
+    } finally {
+      clearAuth();
+      close();
+      window.location.href = '/';
+    }
+  };
+
+  const authActions = isAuthenticated ? (
+    <UserAccountMenu
+      user={user}
+      isAdmin={isAdmin}
+      isCustomer={isCustomer}
+      onLogout={handleLogout}
+    />
+  ) : (
+    <>
+      <Button href="/register" className="header-register-btn">Register</Button>
+      <Button href="/login" className="header-reserve-btn">Login</Button>
+    </>
+  );
+
+  const mobileAuthActions = isAuthenticated ? (
+    <>
+      <Typography component="p" className="header-user-name mobile-header-user">
+        Signed in as {user?.name || user?.email}
+      </Typography>
+      {isAdmin && (
+        <Button href="/dashboard" className="header-reserve-btn mobile-drawer-contact" onClick={close}>
+          Dashboard
+        </Button>
+      )}
+      {isCustomer && (
+        <Button href="/account" className="header-register-btn" onClick={close}>My Account</Button>
+      )}
+      {isCustomer && (
+        <Button href="/reserve" className="header-reserve-btn mobile-drawer-contact" onClick={close}>
+          Reserve
+        </Button>
+      )}
+      <Button type="button" className="header-register-btn" onClick={handleLogout}>
+        Logout
+      </Button>
+    </>
+  ) : (
+    <>
+      <Button href="/register" className="header-register-btn" onClick={close}>Register</Button>
+      <Button href="/login" className="header-reserve-btn mobile-drawer-contact" onClick={close}>Login</Button>
+    </>
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,7 +231,9 @@ export default function Header() {
         <Box className="site-container header-inner">
           <Brand onClick={close} />
           <Navigation />
-          {/* <Button href="/contacts" className="header-contact">Contact us</Button> */}
+          <Stack direction="row" spacing={1.5} className="header-actions">
+            {authActions}
+          </Stack>
           <IconButton
             className="menu-trigger"
             aria-label="Open navigation"
@@ -114,7 +252,9 @@ export default function Header() {
             </IconButton>
           </Box>
           <Navigation mobile onNavigate={close} />
-          <Button href="/contacts" className="header-contact mobile-drawer-contact" onClick={close}>Contact us</Button>
+          <Stack spacing={1.5} className="mobile-drawer-actions">
+            {mobileAuthActions}
+          </Stack>
         </Box>
       </Drawer>
     </>

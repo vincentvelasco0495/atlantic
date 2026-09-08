@@ -19,6 +19,10 @@ import {
   Twitter,
   Wifi,
   WhatsApp,
+  DirectionsBus,
+  AccessTime,
+  Person,
+  LocationOn,
 } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, CardMedia, Container, Dialog, DialogContent, IconButton, Stack, Typography } from '@mui/material';
 import BookingForm from '../components/BookingForm';
@@ -45,7 +49,7 @@ export function useSectionReveal() {
         entry.target.classList.add('is-visible');
         currentObserver.unobserve(entry.target);
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
 
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
@@ -53,30 +57,43 @@ export function useSectionReveal() {
 }
 
 function HeroSection() {
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const heroSlides = featuredBranchImages;
+  const heroImage = heroSlides[0]?.src;
 
-  useEffect(() => {
-    if (isPaused) return undefined;
-    const timer = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % heroSlides.length);
-    }, 4500);
-    return () => window.clearInterval(timer);
-  }, [isPaused, heroSlides.length]);
+  const features = [
+    { icon: <LocationOn />, text: 'Malate, Manila' },
+    { icon: <DirectionsBus />, text: 'Near Quirino LRT Station' },
+    { icon: <AccessTime />, text: 'Open 24/7' },
+    { icon: <Person />, text: 'Made for Seafarers' },
+  ];
 
   return (
-    <section className="hero-section" data-scroll-section>
-      <Container className="site-container hero-layout">
-        <Box className="hero-content">
-          <Typography component="h1" className="hero-title">Atlantic Seaman's Dormitory - a welcoming dormitory for seafarers</Typography>
-          <Typography className="hero-description">Rest, recharge and feel at home between voyages. Our clean and affordable dormitory offers comfortable beds, essential amenities and a supportive community for seafarers in Manila.</Typography>
-          <BookingForm />
-        </Box>
-        <Box className="hero-media" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
-           {heroSlides.map(({ src, alt }, index) => <img className={`hero-slide ${index === activeSlide ? 'is-active' : ''}`} src={src} alt={alt} key={src} />)}
-          <Box className="hero-slide-dots" aria-label="Hero image slides">
-             {heroSlides.map(({ src }, index) => <button type="button" className={index === activeSlide ? 'is-active' : ''} onClick={() => setActiveSlide(index)} aria-label={`Show slide ${index + 1}`} key={src} />)}
+    <section className="hero-section-new" data-scroll-section>
+      <Box className="hero-background">
+        {heroImage && <img className="hero-slide is-active" src={heroImage} alt="Atlantic Seaman's Dormitory dormitory room with bunk beds" />}
+        <Box className="hero-overlay" />
+      </Box>
+      <Container className="site-container hero-content-new">
+        <Box className="hero-text-content">
+          <Typography component="h1" className="hero-title-new">
+            <span className="hero-title-atlantic">ATLANTIC</span>
+            <span className="hero-title-dormitory">SEAMAN'S DORMITORY</span>
+          </Typography>
+          <Typography className="hero-tagline">Basta Seaman's Dorm, Atlantic Seaman's Dormitory Yan! ⚓</Typography>
+          <Typography className="hero-description-new">
+            Affordable, clean and convenient accommodation for Filipino seafarers in the heart of Manila.
+          </Typography>
+          <Box className="hero-features">
+            {features.map((feature, index) => (
+              <Box className="hero-feature-item" key={index}>
+                <span className="hero-feature-icon">{feature.icon}</span>
+                <Typography className="hero-feature-text">{feature.text}</Typography>
+              </Box>
+            ))}
+          </Box>
+          <Box className="hero-cta-buttons">
+            <Button href="/rooms" className="hero-cta-primary">CHECK ROOM RATES</Button>
+            <Button href="/contacts" className="hero-cta-secondary">RESERVE A BED</Button>
           </Box>
         </Box>
       </Container>
