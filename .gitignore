@@ -5,7 +5,7 @@ node_modules/
 dist/
 dist-ssr/
 
-# Local env files
+# Local env files (frontend — .env, .env.local, etc.)
 .env
 .env.*
 !.env.example
